@@ -1,0 +1,103 @@
+/* ===== ANIMATIONS / FX ===== */
+
+/* page fade in / out */
+body{animation:pageIn .6s ease both}
+body.leaving{animation:pageOut .35s ease forwards}
+/* opacity only: a filter/transform on <body> would turn position:fixed children (overlays, title card, map) into page-relative ones */
+@keyframes pageIn{from{opacity:0}to{opacity:1}}
+@keyframes pageOut{to{opacity:0;filter:blur(6px)}}
+
+/* paper grain + vignette + faint scanlines */
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:900;
+  background:repeating-linear-gradient(0deg,rgba(0,0,0,.035) 0 1px,transparent 1px 3px);
+  mix-blend-mode:multiply}
+body::after{content:"";position:fixed;inset:0;pointer-events:none;z-index:901;
+  background:radial-gradient(ellipse at center,transparent 55%,rgba(40,30,10,.28) 100%)}
+
+/* staggered dossier slide-in */
+.rise{opacity:0;transform:translateY(22px);animation:rise .7s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes rise{to{opacity:1;transform:none}}
+.d1{animation-delay:.1s}.d2{animation-delay:.25s}.d3{animation-delay:.4s}.d4{animation-delay:.55s}.d5{animation-delay:.7s}
+
+/* typewriter caret */
+.tw::after{content:"\2588";margin-left:3px;animation:blink 1s steps(1) infinite;color:var(--red)}
+.tw.done::after{display:none}
+@keyframes blink{50%{opacity:0}}
+
+/* glitch logo */
+.glitch{position:relative;display:inline-block}
+.glitch::before,.glitch::after{content:attr(data-text);position:absolute;left:0;top:0;width:100%;overflow:hidden}
+.glitch::before{color:#ff2a3a;animation:gl1 3.2s infinite linear alternate-reverse;clip-path:inset(0 0 55% 0)}
+.glitch::after{color:#2a8bff;animation:gl2 2.6s infinite linear alternate-reverse;clip-path:inset(55% 0 0 0)}
+@keyframes gl1{0%,88%{transform:translate(0)}90%{transform:translate(-3px,1px)}94%{transform:translate(3px,-1px)}100%{transform:translate(0)}}
+@keyframes gl2{0%,84%{transform:translate(0)}87%{transform:translate(3px,1px)}93%{transform:translate(-3px,-1px)}100%{transform:translate(0)}}
+
+/* stamp slam */
+.slam{animation:slam .55s cubic-bezier(.2,1.6,.4,1) both;animation-delay:var(--sd,.9s)}
+@keyframes slam{0%{opacity:0;transform:scale(3.2) rotate(-18deg)}60%{opacity:1;transform:scale(.92) rotate(-4deg)}100%{opacity:.88;transform:scale(1) rotate(-4deg)}}
+
+/* redacted bars reveal */
+.redact{transition:background .5s,color .5s;cursor:help}
+.redact:hover,.redact.open{background:transparent;color:var(--red)}
+
+/* "declassify" blur-to-clear */
+.declass{animation:declass 1.6s ease both;animation-delay:.3s}
+@keyframes declass{from{filter:blur(7px);opacity:.2;letter-spacing:.12em}to{filter:blur(0);opacity:1;letter-spacing:normal}}
+
+/* radar */
+.radar{width:150px;height:150px;border-radius:50%;border:2px solid var(--ink);position:relative;
+  background:
+   radial-gradient(circle,transparent 0 30%,rgba(29,27,22,.25) 30% 31%,transparent 31% 60%,rgba(29,27,22,.25) 60% 61%,transparent 61%),
+   linear-gradient(rgba(29,27,22,.25),rgba(29,27,22,.25)) center/1px 100% no-repeat,
+   linear-gradient(rgba(29,27,22,.25),rgba(29,27,22,.25)) center/100% 1px no-repeat,
+   var(--paper2);overflow:hidden}
+.radar::before{content:"";position:absolute;inset:0;border-radius:50%;
+  background:conic-gradient(from 0deg,rgba(179,32,42,.55),transparent 28%);animation:sweep 3.2s linear infinite}
+.radar i{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--red);opacity:0;animation:ping 3.2s infinite}
+.radar i:nth-child(1){left:62%;top:28%;animation-delay:.5s}
+.radar i:nth-child(2){left:30%;top:64%;animation-delay:1.6s}
+.radar i:nth-child(3){left:72%;top:70%;animation-delay:2.4s}
+@keyframes sweep{to{transform:rotate(360deg)}}
+@keyframes ping{0%{opacity:1;transform:scale(1)}60%{opacity:0;transform:scale(2.6)}100%{opacity:0}}
+
+/* terminal boot */
+.terminal{background:#14130f;color:#b9f5c0;padding:16px;font-size:.85rem;min-height:170px;border:2px solid var(--ink);white-space:pre-wrap}
+.terminal .ok{color:#7dff9a}.terminal .warn{color:#ffd166}
+
+/* tiles */
+.tile{transition:transform .2s,box-shadow .2s}
+a.tile:not(.locked):hover{transform:translateY(-4px) rotate(-1deg);box-shadow:4px 6px 0 var(--ink)}
+.tile.active{animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 3px rgba(179,32,42,.25)}50%{box-shadow:0 0 0 8px rgba(179,32,42,0)}}
+.tile.shake{animation:shake .4s}
+@keyframes shake{20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.tile.unlocking{animation:unlock 1.2s ease}
+@keyframes unlock{0%{transform:scale(.8);opacity:0;background:var(--red)}60%{transform:scale(1.08);opacity:1}100%{transform:scale(1)}}
+
+/* progress bar fill */
+.bar>i{transition:width 1.2s cubic-bezier(.2,.8,.2,1);background-image:repeating-linear-gradient(45deg,rgba(255,255,255,.25) 0 8px,transparent 8px 16px);background-size:32px 32px;animation:stripes 1s linear infinite}
+@keyframes stripes{to{background-position:32px 0}}
+
+/* completion overlay */
+.overlay{position:fixed;inset:0;z-index:1000;background:rgba(20,19,15,.82);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:18px;animation:pageIn .3s both;text-align:center;padding:20px}
+.overlay .stamp{font-size:2rem;background:rgba(243,235,210,.95);padding:10px 26px}
+.overlay p{color:var(--paper);max-width:460px;margin:0}
+
+/* custom crosshair (desktop only) */
+#xhair{position:fixed;width:34px;height:34px;margin:-17px 0 0 -17px;border:2px solid var(--red);border-radius:50%;pointer-events:none;z-index:950;opacity:0;transition:opacity .3s,transform .12s}
+#xhair::before,#xhair::after{content:"";position:absolute;background:var(--red)}
+#xhair::before{left:50%;top:-8px;bottom:-8px;width:2px;margin-left:-1px}
+#xhair::after{top:50%;left:-8px;right:-8px;height:2px;margin-top:-1px}
+#xhair.on{opacity:.8}
+#xhair.big{transform:scale(1.5)}
+@media(hover:none){#xhair{display:none}}
+
+/* top-secret ticker */
+.ticker{overflow:hidden;white-space:nowrap;background:var(--red);color:#fff;font-size:.75rem;letter-spacing:.2em;padding:4px 0}
+.ticker span{display:inline-block;padding-left:100%;animation:tick 28s linear infinite}
+@keyframes tick{to{transform:translateX(-100%)}}
+
+@media(prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}
+  .rise{opacity:1;transform:none}
+}

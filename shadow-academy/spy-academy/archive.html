@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Archive | Shadow Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fx.css">
+<link rel="stylesheet" href="css/upgrade.css">
+<link rel="stylesheet" href="css/v3.css">
+<script src="js/theme.js"></script>
+</head>
+<body>
+<main>
+  <section class="folder rise d1">
+    <div class="row">
+      <div>
+        <div class="meta">Records division</div>
+        <h1 data-type="FIELD REPORT ARCHIVE">FIELD REPORT ARCHIVE</h1>
+      </div>
+      <div class="stamp slam" style="--sd:1.2s">Sealed</div>
+    </div>
+    <p id="sum" class="declass"></p>
+    <p>
+      <button class="btn" id="dl">Download all reports (.txt)</button>
+      <button class="btn ghost" id="wipe">Burn file</button>
+    </p>
+  </section>
+  <div id="list"></div>
+</main>
+<footer>REPORTS ARE STORED ONLY IN THIS BROWSER</footer>
+
+<script src="js/missions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+if (boot("archive")) {
+  setTimeout(runTypewriters, 100);
+  const s = state();
+  const days = Object.keys(s.done).map(Number).filter(d => s.done[d].completed).sort((a, b) => a - b);
+  document.getElementById("sum").textContent =
+    "Agent " + s.codename + " // Rank: " + rankName() + " // " + days.length + " of " + TOTAL_DAYS + " reports filed.";
+  const list = document.getElementById("list");
+  if (!days.length) {
+    list.innerHTML = '<section class="folder rise d3"><p>No reports filed yet. Complete Day 1 to begin your record.</p></section>';
+  }
+  days.forEach((d, i) => {
+    const r = s.done[d], m = MISSIONS[d - 1];
+    const sec = document.createElement("section");
+    sec.className = "folder rise";
+    sec.style.animationDelay = (0.2 + i * 0.07) + "s";
+    sec.innerHTML = `<div class="row"><h2>Day ${d} // ${esc(m.code)}</h2><span class="stamp ok" style="font-size:.7rem">Filed</span></div>
+      <div class="meta">${fmtDate(r.date)}</div><div class="entry">${esc(r.report)}</div>`;
+    list.appendChild(sec);
+  });
+  document.getElementById("dl").addEventListener("click", () => {
+    let t = "SHADOW ACADEMY FIELD REPORTS\nAgent: " + s.codename + "\nRank: " + rankName() + "\n\n";
+    days.forEach(d => {
+      t += "=== DAY " + d + " // " + MISSIONS[d - 1].code + " (" + fmtDate(s.done[d].date) + ") ===\n" + s.done[d].report + "\n\n";
+    });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([t], { type: "text/plain" }));
+    a.download = "field-reports.txt";
+    a.click();
+  });
+  document.getElementById("wipe").addEventListener("click", () => {
+    if (confirm("Burn your entire file? All progress will be lost.")) {
+      localStorage.removeItem(KEY);
+      location.href = "index.html";
+    }
+  });
+}
+</script>
+</body>
+</html>

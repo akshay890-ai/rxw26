@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mission Control | Shadow Academy</title>
+<script src="js/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fx.css">
+<link rel="stylesheet" href="css/upgrade.css">
+<link rel="stylesheet" href="css/v3.css">
+</head>
+<body>
+<main>
+  <section class="folder rise d1">
+    <div class="row">
+      <div>
+        <div class="meta">Operations // Agent support</div>
+        <h1 data-type="MISSION CONTROL">MISSION CONTROL</h1>
+      </div>
+      <div class="stamp slam" style="--sd:1.2s">Live</div>
+    </div>
+    <div class="stats">
+      <div class="stat" id="stStreakBox"><b id="stStreak">0</b><small>Current streak</small></div>
+      <div class="stat"><b id="stBest">0</b><small>Best streak</small></div>
+      <div class="stat"><b id="stActive">0</b><small>Active days</small></div>
+      <div class="stat"><b id="stDone">0</b><small>Missions done</small></div>
+    </div>
+  </section>
+
+  <section class="folder rise d2">
+    <div class="cal-head">
+      <button class="btn ghost" id="prev" aria-label="Previous month">&larr;</button>
+      <h2 id="monthLabel">Month</h2>
+      <button class="btn ghost" id="next" aria-label="Next month">&rarr;</button>
+    </div>
+    <div class="cal" id="cal"></div>
+    <div class="legend">
+      <span><i class="l-done"></i>Mission filed</span>
+      <span><i class="l-streak"></i>Current streak &#128293;</span>
+      <span><i class="l-today"></i>Today</span>
+    </div>
+  </section>
+
+  <section class="folder rise d3">
+    <h2>Daily Reminder</h2>
+    <p>Choose the time you want your daily mission nudge.</p>
+    <p><input type="time" id="rtime" value="19:00"></p>
+    <p>
+      <button class="btn" id="rIcs">Download calendar reminder (.ics)</button>
+      <button class="btn ghost" id="rEnable">Enable browser alerts</button>
+      <button class="btn ghost" id="rOff">Turn off alerts</button>
+    </p>
+    <p class="meta">The calendar reminder repeats daily and works in any calendar app, even when this site is closed. Browser alerts only fire while a Shadow Academy tab is open.</p>
+    <p class="msg" id="rMsg"></p>
+  </section>
+
+  <section class="folder rise d4">
+    <h2>Certificates</h2>
+    <div class="certcards" id="certs"></div>
+  </section>
+</main>
+<footer>MISSION CONTROL &bull; YOUR DATA NEVER LEAVES THIS BROWSER</footer>
+
+<script src="js/missions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+if (boot("control")) {
+  const s = state();
+  titleCardOnce("control", { kicker: "Shadow Academy // Operations", title: "Mission Control", sub: "Agent " + s.codename }, () => setTimeout(runTypewriters, 100));
+
+  /* ---------- stats + data for calendar ---------- */
+  const byDate = {};
+  Object.keys(s.done).forEach(k => {
+    const r = s.done[k];
+    if (r.completed && r.date) { const key = localDateKey(r.date); (byDate[key] = byDate[key] || []).push(Number(k)); }
+  });
+  const st = streakNow();
+  document.getElementById("stStreak").textContent = st;
+  if (st > 0) document.getElementById("stStreakBox").classList.add("hot");
+  document.getElementById("stBest").textContent = (s.streak && s.streak.best) || 0;
+  document.getElementById("stActive").textContent = Object.keys(byDate).length;
+  document.getElementById("stDone").textContent = doneCount() + "/" + TOTAL_DAYS;
+
+  const streakDates = new Set();
+  if (st > 0) {
+    const d = new Date(s.streak.last + "T00:00:00");
+    for (let i = 0; i < s.streak.count; i++) { streakDates.add(localDateKey(d)); d.setDate(d.getDate() - 1); }
+  }
+
+  /* ---------- month calendar (Monday first) ---------- */
+  let view = new Date(); view.setDate(1);
+  const cal = document.getElementById("cal"), label = document.getElementById("monthLabel");
+  function drawCal() {
+    label.textContent = view.toLocaleString(undefined, { month: "long", year: "numeric" }).toUpperCase();
+    let html = ["M", "T", "W", "T", "F", "S", "S"].map(d => `<div class="dow">${d}</div>`).join("");
+    const lead = (view.getDay() + 6) % 7;
+    for (let i = 0; i < lead; i++) html += '<div class="day blank"></div>';
+    const days = new Date(view.getFullYear(), view.getMonth() + 1, 0).getDate();
+    const t = today();
+    for (let d = 1; d <= days; d++) {
+      const key = view.getFullYear() + "-" + pad2(view.getMonth() + 1) + "-" + pad2(d);
+      const ms = byDate[key] || [];
+      const cls = "day" + (ms.length ? " done" : "") + (streakDates.has(key) ? " streak" : "") + (key === t ? " today" : "");
+      const tags = ms.slice(0, 2).map(n => `<span class="tag">D${n}</span>`).join("") + (ms.length > 2 ? `<span class="tag">+${ms.length - 2}</span>` : "");
+      html += `<div class="${cls}"><b>${d}</b>${tags}${streakDates.has(key) ? '<span class="fire">&#128293;</span>' : ""}</div>`;
+    }
+    cal.innerHTML = html;
+  }
+  document.getElementById("prev").addEventListener("click", () => { view.setMonth(view.getMonth() - 1); drawCal(); SFX.click(); });
+  document.getElementById("next").addEventListener("click", () => { view.setMonth(view.getMonth() + 1); drawCal(); SFX.click(); });
+  drawCal();
+
+  /* ---------- reminders ---------- */
+  const rtime = document.getElementById("rtime"), rMsg = document.getElementById("rMsg");
+  function say(t) { rMsg.textContent = t; }
+  const saved = getRemind();
+  if (saved) { rtime.value = saved.time || "19:00"; if (saved.on) say("Browser alerts armed for " + saved.time + " daily while a Shadow Academy tab is open."); }
+
+  document.getElementById("rIcs").addEventListener("click", () => {
+    const count = Math.max(1, TOTAL_DAYS - doneCount());
+    const blob = new Blob([buildICS(rtime.value || "19:00", count)], { type: "text/calendar" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "shadow-academy-reminder.ics";
+    a.click();
+    SFX.beep();
+    say("Calendar file downloaded. Open it to add a daily " + (rtime.value || "19:00") + " reminder for " + count + (count === 1 ? " day." : " days."));
+  });
+
+  document.getElementById("rEnable").addEventListener("click", async () => {
+    const time = rtime.value || "19:00";
+    if (!("Notification" in window)) { say("This browser does not support alerts. Use the calendar reminder instead."); SFX.deny(); return; }
+    let perm = "denied";
+    try { perm = await Notification.requestPermission(); } catch (e) {}
+    if (perm !== "granted") { say("Alerts are blocked. Allow notifications in your browser's site settings, or use the calendar reminder."); SFX.deny(); return; }
+    setRemind({ on: true, time: time, last: null });
+    say("Browser alerts armed for " + time + " daily while a Shadow Academy tab is open.");
+    SFX.success();
+    try { new Notification("Shadow Academy", { body: "Test transmission received, Agent." }); } catch (e) {}
+  });
+
+  document.getElementById("rOff").addEventListener("click", () => {
+    const r = getRemind();
+    if (r) { r.on = false; setRemind(r); }
+    say("Browser alerts are off.");
+    SFX.click();
+  });
+
+  /* ---------- certificates ---------- */
+  const cards = [
+    { type: "core", title: "Agent Certificate", sub: "30-Day Field Training Program", need: CORE_DAYS },
+    { type: "elite", title: "Elite Certificate", sub: "60-Day Master Course", need: TOTAL_DAYS }
+  ];
+  document.getElementById("certs").innerHTML = cards.map(c => {
+    const ready = isDone(c.need);
+    const have = Math.min(doneCount(), c.need);
+    return `<div class="certcard ${ready ? "" : "locked"}"><div class="meta">${esc(c.sub)}</div><h3>${esc(c.title)}</h3>
+      ${ready ? `<p>Issued. Print it or save it as a PDF.</p><a class="btn" href="certificate.html?type=${c.type}">View certificate</a>`
+              : `<p>Locked: ${have} / ${c.need} missions complete.</p>`}</div>`;
+  }).join("");
+}
+</script>
+</body>
+</html>

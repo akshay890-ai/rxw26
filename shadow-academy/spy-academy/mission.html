@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mission | Shadow Academy</title>
+<script src="js/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fx.css">
+<link rel="stylesheet" href="css/upgrade.css">
+<link rel="stylesheet" href="css/v3.css">
+</head>
+<body>
+<main id="app"></main>
+<footer>FILE YOUR REPORT HONESTLY &bull; ONLY YOU CAN READ IT</footer>
+
+<script src="js/missions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+if (boot("mission")) {
+  const day = parseInt(new URLSearchParams(location.search).get("day"), 10);
+  if (!day || day < 1 || day > TOTAL_DAYS || !isUnlocked(day)) { location.replace("dashboard.html"); }
+  else render(day);
+}
+
+function phaseOf(d) { return PHASES.find(p => d >= p.days[0] && d <= p.days[1]); }
+
+function render(day) {
+  const m = MISSIONS[day - 1], p = phaseOf(day);
+  const elite = day > CORE_DAYS;
+  if (elite) document.body.classList.add("elite");
+  const st0 = state();
+  const rec = st0.done[day] || { tasks: [], report: "", completed: false };
+  const finished = !!rec.completed;
+
+  /* older saves: if the mission already has progress but no clock, arm it now */
+  if (!finished && !rec.startedAt && (rec.report || (rec.tasks || []).some(Boolean))) {
+    rec.startedAt = startMission(day);
+  }
+  let startedAt = rec.startedAt || 0;
+  const started = !!startedAt || finished;
+
+  const tasks = m.tasks.map((t, i) => `
+    <label class="task ${rec.tasks[i] ? "done" : ""}">
+      <input type="checkbox" data-i="${i}" ${rec.tasks[i] ? "checked" : ""} ${started && !finished ? "" : "disabled"}>
+      <span><b>Task ${i + 1}.</b> ${esc(t)} <small class="meta">(+10 XP)</small></span>
+    </label>`).join("");
+
+  const app = document.getElementById("app");
+  app.innerHTML = `
+  <section class="folder rise d1">
+    <div class="row">
+      <div>
+        <div class="meta">${elite ? '<span class="tag-elite">ELITE</span> // ' : ""}${esc(p.name)} // ${esc(p.sub)}</div>
+        <h1>DAY ${day} <span style="color:var(--red)">//</span> <span data-type="${esc(m.code)}">${esc(m.code)}</span></h1>
+      </div>
+      ${finished ? '<div class="stamp ok slam" style="--sd:.6s">Accomplished</div>' : '<div class="stamp slam" style="--sd:.8s">Active</div>'}
+    </div>
+    <div class="note rr"><span class="stamp ok slam dstamp" style="--sd:2.3s">Declassified</span><b>INTEL BRIEFING:</b> ${esc(m.intel)}</div>
+  </section>
+
+  ${finished ? "" : `
+  <section class="folder rise d2">
+    <h2>Mission Clock</h2>
+    <div id="begin" style="${started ? "display:none" : ""}">
+      <p>Starting the mission arms a 24-hour clock. Tasks and your report unlock when you begin. Finish inside 24 hours for a <b>+25 XP</b> bonus (overdue missions still count).</p>
+      <button class="btn" id="beginBtn">Begin Mission</button>
+    </div>
+    <div id="armed" style="${started ? "" : "display:none"}">
+      <div class="clock" id="clock">24:00:00</div>
+      <p class="meta" id="clockNote"></p>
+    </div>
+  </section>`}
+
+  <section class="folder rise d3">
+    <h2>Field Tasks</h2>
+    <p class="meta">All tasks must be completed in real life. Check each one only when it is truly done.</p>
+    ${tasks}
+  </section>
+
+  <section class="folder rise d4">
+    <h2>After-Action Report</h2>
+    <p>${esc(m.report)}</p>
+    <textarea id="report" placeholder="Write at least 40 characters. Be specific and honest." ${started && !finished ? "" : "readonly"}>${esc(rec.report || "")}</textarea>
+    <p class="meta" id="count"></p>
+    <div class="row">
+      <div>
+        ${day > 1 ? `<a class="btn ghost" href="mission.html?day=${day - 1}">&larr; Day ${day - 1}</a>` : ""}
+        <a class="btn ghost" href="dashboard.html">Headquarters</a>
+        ${finished && day < TOTAL_DAYS ? `<a class="btn ghost" href="mission.html?day=${day + 1}">Day ${day + 1} &rarr;</a>` : ""}
+      </div>
+      ${finished ? "" : '<button class="btn" id="done" disabled>Complete Mission</button>'}
+    </div>
+    <p class="meta" id="why"></p>
+  </section>`;
+
+  /* cinematic title card once per mission per session, then typewriter */
+  titleCardOnce("day" + day, {
+    kicker: (elite ? "Elite Program // " : "") + p.name,
+    title: "Day " + day + " // " + m.code,
+    sub: finished ? "Mission accomplished" : "Classified briefing"
+  }, () => setTimeout(() => runTypewriters(), 150));
+
+  if (finished) {
+    document.getElementById("count").textContent =
+      "Filed " + fmtDate(rec.date) + " // " + xpOf(rec) + " XP earned" + (rec.inTime ? " // finished inside the 24h clock" : "");
+    return;
+  }
+
+  const rep = document.getElementById("report"), btn = document.getElementById("done");
+  const boxes = [...app.querySelectorAll("input[type=checkbox]")];
+  const clock = document.getElementById("clock"), note = document.getElementById("clockNote");
+  let timer = null;
+
+  function isStarted() { return !!startedAt; }
+  function persist() {
+    const st = state();
+    const r = st.done[day] || {};
+    r.tasks = boxes.map(b => b.checked);
+    r.report = rep.value;
+    st.done[day] = r;
+    save(st);
+  }
+  function check() {
+    const allTasks = boxes.every(b => b.checked);
+    const len = rep.value.trim().length;
+    document.getElementById("count").textContent = isStarted() ? len + " / 40 characters" : "";
+    btn.disabled = !(isStarted() && allTasks && len >= 40);
+    document.getElementById("why").textContent = !isStarted() ? "Begin the mission to unlock tasks and the report."
+      : btn.disabled ? (!allTasks ? "Complete every task to proceed." : "Your report needs at least 40 characters.") : "Ready for debrief.";
+    boxes.forEach(b => b.closest("label").classList.toggle("done", b.checked));
+  }
+  function tickClock() {
+    const left = startedAt + DAY_MS - Date.now();
+    const a = Math.abs(left);
+    const h = Math.floor(a / 3600000), mi = Math.floor(a % 3600000 / 60000), s = Math.floor(a % 60000 / 1000);
+    clock.textContent = (left < 0 ? "+" : "") + pad2(h) + ":" + pad2(mi) + ":" + pad2(s);
+    clock.classList.toggle("low", left >= 0 && left < 3600000);
+    clock.classList.toggle("over", left < 0);
+    note.textContent = left < 0
+      ? "Overdue. You can still complete the mission, but the +25 XP clock bonus is gone."
+      : left < 3600000 ? "Under one hour left for the clock bonus." : "Complete before the clock hits zero for +25 XP.";
+  }
+  function arm() {
+    document.getElementById("begin").style.display = "none";
+    document.getElementById("armed").style.display = "block";
+    boxes.forEach(b => b.disabled = false);
+    rep.readOnly = false;
+    tickClock();
+    timer = setInterval(tickClock, 1000);
+    check();
+  }
+
+  boxes.forEach(b => b.addEventListener("change", () => {
+    persist(); check(); SFX.click();
+    if (b.checked) toast("<b>+10 XP</b> task logged");
+  }));
+  rep.addEventListener("input", () => { persist(); check(); });
+
+  const beginBtn = document.getElementById("beginBtn");
+  if (beginBtn) beginBtn.addEventListener("click", () => {
+    startedAt = startMission(day);
+    SFX.beep();
+    toast("<b>Clock armed.</b> 24 hours. Good luck, Agent.");
+    arm();
+  });
+
+  if (startedAt) arm(); else check();
+
+  btn.addEventListener("click", () => {
+    if (timer) clearInterval(timer);
+    const res = completeMission(day, boxes.map(b => b.checked), rep.value.trim());
+    let msg;
+    if (day === CORE_DAYS) msg = "Core program complete. Your certificate has been issued, and the <b>Elite Program</b> (Days 31-60) is now open.";
+    else if (day === TOTAL_DAYS) msg = "Elite Program complete. Your file is closed, Director.";
+    else msg = `Report filed. Day ${day + 1} has been declassified.`;
+    msg += `<br><br><b>+${res.missionXP} XP</b> earned` + (res.inTime ? " (clock bonus included)" : "") +
+      `<br>Streak: <b>${res.streak}</b> day${res.streak === 1 ? "" : "s"}`;
+    if (res.leveled) msg += `<br><b>LEVEL UP: ${res.leveled}</b>`;
+    if (res.promoted) msg += `<br><b>PROMOTION: ${esc(res.promoted.toUpperCase())}</b>`;
+    if (res.newBadges.length) msg += `<br><br>New badge${res.newBadges.length > 1 ? "s" : ""}: ` + res.newBadges.map(b => b.ico + " " + esc(b.name)).join(", ");
+    if (day < TOTAL_DAYS) sessionStorage.setItem("justUnlocked", String(day + 1));
+
+    if (day === CORE_DAYS) {
+      overlay("MISSION ACCOMPLISHED", msg, "View Certificate", () => { location.href = "certificate.html?type=core"; },
+        "Enter Elite Program", () => { location.href = "dashboard.html"; });
+    } else if (day === TOTAL_DAYS) {
+      overlay("MISSION ACCOMPLISHED", msg, "View Elite Certificate", () => { location.href = "certificate.html?type=elite"; },
+        "Open Archive", () => { location.href = "archive.html"; });
+    } else {
+      overlay("MISSION ACCOMPLISHED", msg, "Proceed to Headquarters", () => { location.href = "dashboard.html"; });
+    }
+  });
+}
+</script>
+</body>
+</html>

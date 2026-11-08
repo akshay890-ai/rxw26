@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Certificate | Shadow Academy</title>
+<script src="js/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fx.css">
+<link rel="stylesheet" href="css/upgrade.css">
+<link rel="stylesheet" href="css/v3.css">
+</head>
+<body>
+<main>
+  <section class="folder rise d1">
+    <div class="cert" id="cert">
+      <div class="cert-kicker">Shadow Academy // Field Training Division</div>
+      <h1 class="cert-title">Certificate of Completion</h1>
+      <div class="cert-prog" id="prog"></div>
+      <p style="margin:16px 0 0">This certifies that</p>
+      <div class="cert-name" id="cname"></div>
+      <p class="cert-body" id="cbody"></p>
+      <div class="cert-meta">
+        <div><b id="mRank"></b><small>Rank earned</small></div>
+        <div><b id="mDone"></b><small>Missions filed</small></div>
+        <div><b id="mXp"></b><small>XP earned</small></div>
+        <div><b id="mStreak"></b><small>Best streak</small></div>
+      </div>
+      <div class="cert-foot">
+        <div>
+          <div class="sig" style="margin-bottom:14px">Director, Shadow Academy</div>
+          <div class="sig"><span id="cdate"></span> &bull; Serial <b id="cserial"></b></div>
+        </div>
+        <div class="seal" style="--sd:1.6s">&#9733;</div>
+      </div>
+      <div class="cert-fine">Fictional training certificate for self-improvement only. Not issued by any government or agency.</div>
+    </div>
+  </section>
+  <p class="no-print">
+    <button class="btn" id="print">Print / Save as PDF</button>
+    <a class="btn ghost" href="control.html">Mission Control</a>
+    <a class="btn ghost" href="dashboard.html">Headquarters</a>
+  </p>
+</main>
+<footer>IN YOUR BROWSER'S PRINT DIALOG, CHOOSE "SAVE AS PDF" TO KEEP A COPY</footer>
+
+<script src="js/missions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+function hash8(str) {
+  let h = 2166136261;
+  for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+  return (h >>> 0).toString(16).toUpperCase().padStart(8, "0");
+}
+if (boot("certificate")) {
+  const type = new URLSearchParams(location.search).get("type") === "elite" ? "elite" : "core";
+  const need = type === "elite" ? TOTAL_DAYS : CORE_DAYS;
+  if (!isDone(need)) { location.replace("control.html"); }
+  else {
+    const s = state();
+    const rec = s.done[need];
+    const d = new Date(rec.date);
+    document.getElementById("prog").textContent = type === "elite" ? "Elite Program // 60-Day Master Course" : "30-Day Field Training Program";
+    document.getElementById("cname").textContent = "AGENT " + s.codename;
+    document.getElementById("cbody").textContent = type === "elite"
+      ? "has completed all sixty missions of the Shadow Academy, mastering advanced awareness, ethical interviewing, analysis, security and command."
+      : "has completed all thirty field missions of the Shadow Academy: observation, memory, reading people, ethical influence, cover, codes and discipline.";
+    document.getElementById("mRank").textContent = rankFor(need);
+    document.getElementById("mDone").textContent = need;
+    document.getElementById("mXp").textContent = xpUpTo(need);
+    document.getElementById("mStreak").textContent = (s.streak && s.streak.best) || 0;
+    document.getElementById("cdate").textContent = isNaN(d) ? "" : d.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
+    document.getElementById("cserial").textContent = "SA-" + hash8(s.codename + "|" + (s.enlisted || "") + "|" + type);
+
+    titleCardOnce("cert" + type, {
+      kicker: "Shadow Academy // Certification",
+      title: type === "elite" ? "Elite Graduate" : "Certified Agent",
+      sub: "Agent " + s.codename
+    }, () => { setTimeout(() => SFX.thud(), 1700); setTimeout(() => SFX.success(), 2000); });
+
+    document.getElementById("print").addEventListener("click", () => { SFX.click(); window.print(); });
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Handbook | Shadow Academy</title>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fx.css">
+<link rel="stylesheet" href="css/upgrade.css">
+<link rel="stylesheet" href="css/v3.css">
+<script src="js/theme.js"></script>
+</head>
+<body>
+<main>
+  <section class="folder rise d1">
+    <div class="row">
+      <div>
+        <div class="meta">Field manual // Restricted</div>
+        <h1 data-type="TRADECRAFT HANDBOOK">TRADECRAFT HANDBOOK</h1>
+      </div>
+      <div class="stamp slam" style="--sd:1.2s">Eyes Only</div>
+    </div>
+    <p class="declass">The real craft behind the movies: attention, memory, empathy, discipline and security. Hover or tap the <span class="redact">black bars</span> to read redacted notes.</p>
+  </section>
+
+  <section class="folder rise d2">
+    <h2>The 10 Rules of the Field</h2>
+    <ul class="clean">
+      <li><b>1. Observe before you act.</b> Information first, decisions second.</li>
+      <li><b>2. Baseline, then deviation.</b> Know what normal looks like.</li>
+      <li><b>3. Hold hypotheses loosely.</b> Body language is probability, not proof.</li>
+      <li><b>4. Listen twice as much as you speak.</b> People tell you everything if you let them.</li>
+      <li><b>5. Keep your cover simple.</b> The fewer the lies, the fewer the slips. <span class="redact">Truth is the best cover story.</span></li>
+      <li><b>6. Ask, don't accuse.</b> A good question beats a confident guess.</li>
+      <li><b>7. Slow is smooth.</b> Calm breathing, calm voice, calm movement.</li>
+      <li><b>8. Protect your information.</b> Strong passwords, privacy settings, small footprint.</li>
+      <li><b>9. Always have a backup plan and an abort condition.</b></li>
+      <li><b>10. Integrity is the real cover.</b> <span class="redact">Trust earned honestly lasts; trust gained by deceit collapses.</span></li>
+    </ul>
+  </section>
+
+  <section class="folder rise d3">
+    <h2>Influence: How It Works and How To Defend</h2>
+    <p>These six levers of persuasion appear in movies and in everyday marketing. Learn them to use fairly, and to notice when they are used on you.</p>
+    <ul class="clean">
+      <li><b>Reciprocity:</b> we repay favors. <i>Defense:</i> a gift is not a debt.</li>
+      <li><b>Commitment:</b> we stay consistent with earlier statements. <i>Defense:</i> it's fine to change your mind.</li>
+      <li><b>Social proof:</b> "everyone is doing it". <i>Defense:</i> check the evidence.</li>
+      <li><b>Authority:</b> we obey titles. <i>Defense:</i> verify credentials independently.</li>
+      <li><b>Liking:</b> we say yes to people we like. <i>Defense:</i> separate the person from the request.</li>
+      <li><b>Scarcity:</b> "only 2 left". <i>Defense:</i> slow down; urgency is a red flag.</li>
+    </ul>
+    <div class="note"><b>Academy ethics:</b> influence is honest when the other person has a real choice and would still agree if they understood exactly what you were doing. If it only works in the dark, don't do it.</div>
+  </section>
+
+  <section class="folder rise d4">
+    <h2>Cipher Desk</h2>
+    <p>Caesar cipher: shifts each letter by a key. Try it, then use it for Day 20.</p>
+    <input type="text" id="msg" placeholder="Type your message">
+    <p>Shift key: <input type="number" id="key" value="3" min="1" max="25" style="width:80px;font:inherit;padding:6px"></p>
+    <p>
+      <button class="btn" id="enc">Encode</button>
+      <button class="btn ghost" id="dec">Decode</button>
+    </p>
+    <div class="terminal" id="out" style="min-height:60px">&gt; awaiting input</div>
+  </section>
+</main>
+<footer>KNOWLEDGE IS THE ONLY WEAPON YOU NEED</footer>
+
+<script src="js/missions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+if (boot("handbook")) {
+  setTimeout(runTypewriters, 100);
+  function shift(t, k) {
+    return t.replace(/[a-z]/gi, c => {
+      const b = c <= "Z" ? 65 : 97;
+      return String.fromCharCode((c.charCodeAt(0) - b + k + 26 * 10) % 26 + b);
+    });
+  }
+  const msg = document.getElementById("msg"), key = document.getElementById("key"), out = document.getElementById("out");
+  function show(text) {
+    out.textContent = "> ";
+    let i = 0;
+    const t = setInterval(() => { out.textContent += text.charAt(i++); if (i >= text.length) clearInterval(t); }, 18);
+  }
+  function k() { return Math.max(1, Math.min(25, parseInt(key.value, 10) || 3)); }
+  document.getElementById("enc").addEventListener("click", () => show(shift(msg.value, k())));
+  document.getElementById("dec").addEventListener("click", () => show(shift(msg.value, -k())));
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+/* ===== UPGRADE: dark theme, header controls, stats, badges, timer, biometric scan ===== */
+:root{--bg:#cfc3a1}
+body{background:var(--bg);transition:background .4s}
+
+/* ---- dark terminal theme (toggle in header) ---- */
+html[data-theme="dark"]{
+  --bg:#070907;--paper:#10150f;--paper2:#0b0f0a;--ink:#c9f2c2;--muted:#7fa882;
+  --red:#ff4d57;--line:#2a3a2a;--green:#5fd47a}
+html[data-theme="dark"] header.top{background:#050605;color:#c9f2c2}
+html[data-theme="dark"] header.top nav a{color:#c9f2c2}
+html[data-theme="dark"] header.top nav a:hover,html[data-theme="dark"] header.top nav a.on{color:#fff}
+html[data-theme="dark"] .folder{box-shadow:0 0 0 1px #1c281c,0 0 26px rgba(95,212,122,.08)}
+html[data-theme="dark"] .folder::before{background:repeating-linear-gradient(90deg,var(--ink) 0 14px,transparent 14px 20px);opacity:.12}
+html[data-theme="dark"] body::before{mix-blend-mode:screen;background:repeating-linear-gradient(0deg,rgba(95,212,122,.045) 0 1px,transparent 1px 3px)}
+html[data-theme="dark"] body::after{background:radial-gradient(ellipse at center,transparent 50%,rgba(0,0,0,.65) 100%)}
+html[data-theme="dark"] .btn{color:#06100a}
+html[data-theme="dark"] .btn:hover{background:var(--red);color:#fff}
+html[data-theme="dark"] .btn.ghost{background:transparent;color:var(--ink)}
+html[data-theme="dark"] .btn:disabled{background:#2a3a2a;color:#5d7a60}
+html[data-theme="dark"] .terminal{background:#000;color:#7dff9a;border-color:#2a3a2a}
+html[data-theme="dark"] .overlay .stamp{background:rgba(16,21,15,.96)}
+html[data-theme="dark"] .toast{color:#06100a}
+html[data-theme="dark"] .pad{box-shadow:0 0 22px rgba(95,212,122,.15)}
+
+/* ---- header controls ---- */
+.controls{display:flex;gap:8px}
+.ctrl{background:transparent;border:1px solid currentColor;color:inherit;font:inherit;font-size:.72rem;letter-spacing:.1em;padding:4px 9px;cursor:pointer}
+.ctrl:hover{background:var(--red);border-color:var(--red);color:#fff}
+
+/* ---- agent ID card + stats ---- */
+.idcard{display:flex;gap:16px;align-items:center;flex-wrap:wrap;border:3px double var(--ink);padding:14px;background:var(--paper2);position:relative;overflow:hidden}
+.idcard::after{content:"";position:absolute;left:0;right:0;height:40px;top:-40px;background:linear-gradient(transparent,rgba(179,32,42,.18),transparent);animation:idscan 4s linear infinite}
+@keyframes idscan{to{top:110%}}
+.photo{width:84px;height:104px;border:2px solid var(--ink);display:flex;align-items:center;justify-content:center;font-size:3rem;background:repeating-linear-gradient(0deg,rgba(0,0,0,.08) 0 2px,transparent 2px 4px)}
+.idinfo{flex:1;min-width:200px}
+.idinfo h2{margin:0 0 4px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-top:14px}
+.stat{border:2px solid var(--ink);padding:10px;background:var(--paper2)}
+.stat b{display:block;font-size:1.5rem}
+.stat small{color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+.stat.hot b{color:var(--red)}
+
+/* ---- badges ---- */
+.badges{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.badge{border:2px dashed var(--line);padding:10px;text-align:center;opacity:.45;filter:grayscale(1)}
+.badge .ico{font-size:1.9rem;display:block}
+.badge b{display:block;font-size:.85rem;text-transform:uppercase;letter-spacing:.05em}
+.badge small{display:block;color:var(--muted);font-size:.7rem}
+.badge.on{border:2px solid var(--red);opacity:1;filter:none;animation:badgePop .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes badgePop{0%{transform:scale(.6) rotate(-8deg)}100%{transform:none}}
+
+/* ---- mission clock ---- */
+.clock{display:inline-block;font-size:2.1rem;letter-spacing:.14em;border:2px solid var(--ink);padding:8px 16px;background:var(--paper2)}
+.clock.low{color:var(--red);animation:blink 1s steps(1) infinite}
+.clock.over{color:var(--red);border-color:var(--red)}
+.locked-note{opacity:.55}
+
+/* ---- toasts ---- */
+.toast-wrap{position:fixed;right:14px;bottom:14px;z-index:1100;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.toast{background:var(--ink);color:var(--paper);padding:10px 14px;border-left:6px solid var(--red);max-width:300px;font-size:.85rem;animation:toastIn .4s cubic-bezier(.2,.9,.3,1.2) both}
+@keyframes toastIn{from{transform:translateX(120%);opacity:0}to{transform:none;opacity:1}}
+
+/* ---- biometric scanner ---- */
+.pad{position:relative;display:block;width:176px;height:176px;border-radius:50%;margin:12px auto;padding:0;border:2px solid var(--ink);background:var(--paper2);color:var(--ink);cursor:pointer;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overflow:hidden;transition:border-color .3s,color .3s,box-shadow .3s}
+.pad svg.fp{width:100%;height:100%;padding:24px}
+.pad .beam{position:absolute;left:0;right:0;top:6%;height:3px;background:var(--red);box-shadow:0 0 14px var(--red);opacity:0}
+.pad.scanning{border-color:var(--red);box-shadow:0 0 0 6px rgba(179,32,42,.18)}
+.pad.scanning .beam{opacity:1;animation:beam .9s ease-in-out infinite alternate}
+@keyframes beam{from{top:6%}to{top:92%}}
+.pad.granted{border-color:var(--green);color:var(--green);box-shadow:0 0 0 8px rgba(47,107,58,.2)}
+.pad:focus-visible{outline:3px solid var(--red);outline-offset:4px}
+.ringwrap{position:relative;width:196px;margin:0 auto}
+.ringwrap svg.ring{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);pointer-events:none}
+.ringwrap svg.ring circle{fill:none;stroke:var(--red);stroke-width:2.6;stroke-linecap:round}
+.ringwrap .pad{margin:10px auto}
+.scanStatus{text-align:center;letter-spacing:.2em;text-transform:uppercase;min-height:1.6em;margin:6px 0}
+.scanStatus.ok{color:var(--green);font-weight:bold}
+.scanStatus.bad{color:var(--red)}
+.flash{position:fixed;inset:0;background:var(--green);opacity:0;pointer-events:none;z-index:1050;animation:flash .7s ease}
+@keyframes flash{0%{opacity:.45}100%{opacity:0}}

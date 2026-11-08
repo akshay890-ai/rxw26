@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Headquarters | Shadow Academy</title>
+<script src="js/theme.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+<link rel="stylesheet" href="css/fx.css">
+<link rel="stylesheet" href="css/upgrade.css">
+<link rel="stylesheet" href="css/v3.css">
+</head>
+<body>
+<main>
+  <section class="folder rise d1">
+    <div class="row" style="margin-bottom:14px">
+      <div class="meta">Headquarters // Agent file</div>
+      <div class="radar" style="width:70px;height:70px"><i></i><i></i><i></i></div>
+    </div>
+    <div class="idcard">
+      <div class="photo">&#128373;&#65039;</div>
+      <div class="idinfo">
+        <div class="meta">Agent identification</div>
+        <h2 id="hello">AGENT</h2>
+        <div>Rank: <b id="rank"></b> &bull; Next: <span id="next"></span></div>
+        <div style="margin-top:10px">
+          <div class="row"><span class="meta" id="lvl"></span><span class="meta" id="xpTxt"></span></div>
+          <div class="bar"><i id="xpFill" style="width:0"></i></div>
+        </div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="stat"><b id="sDone">0</b><small>Missions done</small></div>
+      <div class="stat"><b id="sXp">0</b><small>Total XP</small></div>
+      <div class="stat" id="streakBox"><b id="sStreak">0</b><small>Day streak</small></div>
+      <div class="stat"><b id="sBadge">0</b><small>Badges</small></div>
+    </div>
+    <p class="meta" id="streakNote" style="margin-top:10px"></p>
+    <div style="margin-top:12px">
+      <div class="row"><span class="meta">Training progress</span><span class="meta" id="pct"></span></div>
+      <div class="bar"><i id="fill" style="width:0"></i></div>
+    </div>
+    <p style="margin-top:16px">
+      <a class="btn" id="cont" href="#">Open today's mission</a>
+      <a class="btn ghost" href="control.html">Mission Control</a>
+    </p>
+  </section>
+
+  <section class="folder rise d2">
+    <div class="meta">Commendations</div>
+    <h2>Badges</h2>
+    <div class="badges" id="badges"></div>
+  </section>
+
+  <div id="phases"></div>
+</main>
+<footer>MISSIONS UNLOCK ONLY AFTER YOU COMPLETE THE PREVIOUS ONE</footer>
+
+<script src="js/missions.js"></script>
+<script src="js/sfx.js"></script>
+<script src="js/app.js"></script>
+<script src="js/map.js"></script>
+<script>
+if (boot("dashboard")) {
+  const s = state();
+  titleCardOnce("dash", { kicker: "Shadow Academy // Field Training", title: "Headquarters", sub: "Agent " + s.codename });
+
+  document.getElementById("hello").textContent = "AGENT " + s.codename;
+  document.getElementById("rank").textContent = rankName();
+  const nr = nextRank();
+  document.getElementById("next").textContent = nr ? nr.name + " at " + nr.at + " missions" : "Maximum rank reached";
+
+  const n = doneCount(), li = levelInfo(), st = streakNow(), earned = earnedBadges();
+  document.getElementById("pct").textContent = n + " / " + TOTAL_DAYS + " complete";
+  document.getElementById("lvl").textContent = "LEVEL " + li.level;
+  document.getElementById("xpTxt").textContent = li.into + " / " + li.need + " XP to next level";
+  document.getElementById("sDone").textContent = n;
+  document.getElementById("sXp").textContent = li.xp;
+  document.getElementById("sStreak").textContent = st;
+  document.getElementById("sBadge").textContent = earned.length + "/" + BADGES.length;
+  if (st > 0) document.getElementById("streakBox").classList.add("hot");
+  document.getElementById("streakNote").textContent =
+    n >= TOTAL_DAYS ? "Both programs complete. Director."
+    : st === 0 ? "No active streak. Complete a mission today to start one."
+    : streakAtRisk() ? "Streak at risk: complete a mission today or it resets."
+    : "Streak safe for today. Come back tomorrow.";
+  setTimeout(() => {
+    document.getElementById("fill").style.width = (n / TOTAL_DAYS * 100) + "%";
+    document.getElementById("xpFill").style.width = (li.into / li.need * 100) + "%";
+  }, 400);
+
+  document.getElementById("badges").innerHTML = BADGES.map(b =>
+    `<div class="badge ${earned.includes(b.id) ? "on" : ""}"><span class="ico">${b.ico}</span><b>${esc(b.name)}</b><small>${esc(b.desc)}</small></div>`
+  ).join("");
+
+  const cd = currentDay();
+  const cont = document.getElementById("cont");
+  if (n >= TOTAL_DAYS) { cont.textContent = "Program complete, view archive"; cont.href = "archive.html"; }
+  else { cont.textContent = "Open Day " + cd + (cd > CORE_DAYS ? " mission (Elite)" : " mission"); cont.href = "mission.html?day=" + cd; }
+
+  const just = sessionStorage.getItem("justUnlocked");
+  sessionStorage.removeItem("justUnlocked");
+  if (just) setTimeout(() => SFX.beep(), 500);
+
+  const wrap = document.getElementById("phases");
+  let eliteHead = false;
+  PHASES.forEach((p, pi) => {
+    if (p.elite && !eliteHead) {
+      eliteHead = true;
+      const open = isDone(CORE_DAYS);
+      const h = document.createElement("section");
+      h.className = "folder rise elite elite-head";
+      h.style.animationDelay = (0.3 + pi * 0.1) + "s";
+      h.innerHTML = `<div class="row"><div><div class="meta tag-elite">Days 31-60</div><h2>Elite Program</h2>
+        <p style="margin:0">${open ? "Advanced tradecraft: awareness, interviewing, analysis, security, command." : "Complete Day 30 to unlock the Elite Program."}</p></div>
+        <div class="stamp ${open ? "ok" : ""}">${n >= TOTAL_DAYS ? "Mastered" : open ? "Open" : "Locked"}</div></div>`;
+      wrap.appendChild(h);
+    }
+    const sec = document.createElement("section");
+    sec.className = "folder rise" + (p.elite ? " elite" : "");
+    sec.style.animationDelay = (0.3 + pi * 0.1) + "s";
+    let html = `<div class="meta">${p.sub}</div><h2>${p.name}</h2><div class="grid">`;
+    for (let d = p.days[0]; d <= p.days[1]; d++) {
+      const m = MISSIONS[d - 1];
+      const done = isDone(d), open = isUnlocked(d), active = open && !done;
+      const cls = "tile " + (p.elite ? "elite " : "") + (done ? "done" : open ? (active ? "active" : "") : "locked") + (String(d) === just ? " unlocking" : "");
+      html += open
+        ? `<a class="${cls}" href="mission.html?day=${d}"><small>Day</small><b>${d}</b><small>${esc(m.code)}</small></a>`
+        : `<a class="${cls}" href="#" data-locked="1"><small>Day</small><b>${d}</b><small>Locked</small></a>`;
+    }
+    sec.innerHTML = html + "</div>";
+    wrap.appendChild(sec);
+  });
+  wrap.addEventListener("click", e => {
+    const t = e.target.closest("[data-locked]");
+    if (t) { e.preventDefault(); t.classList.remove("shake"); void t.offsetWidth; t.classList.add("shake"); SFX.deny(); }
+  });
+}
+</script>
+</body>
+</html>
